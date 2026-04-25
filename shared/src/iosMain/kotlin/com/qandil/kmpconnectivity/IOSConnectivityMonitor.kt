@@ -16,7 +16,9 @@ import platform.posix.sockaddr_in
 
 class IOSConnectivityMonitor : ConnectivityMonitor {
     private val _status = MutableStateFlow(ConnectivityStatus.Unavailable)
+    private val _networkType = MutableStateFlow(NetworkType.Unknown)
     override val status: StateFlow<ConnectivityStatus> = _status
+    override val networkType: StateFlow<NetworkType> = _networkType
 
     private var reachability: SCNetworkReachabilityRef? = null
     private var selfRef: StableRef<IOSConnectivityMonitor>? = null
@@ -90,8 +92,10 @@ class IOSConnectivityMonitor : ConnectivityMonitor {
         val reachable = flags.toInt() and kSCNetworkReachabilityFlagsReachable.toInt() != 0
         val needsConn = flags.toInt() and kSCNetworkReachabilityFlagsConnectionRequired.toInt() != 0
         val online = reachable && !needsConn
+        val networkType = inferNetworkType(flags)
         scope.launch {
             _status.value = if (online) ConnectivityStatus.Online else ConnectivityStatus.Offline
+            _networkType.value = networkType
         }
     }
 
@@ -108,4 +112,20 @@ class IOSConnectivityMonitor : ConnectivityMonitor {
 
 actual class ConnectivityMonitorFactory {
     actual fun create(): ConnectivityMonitor = IOSConnectivityMonitor()
+}
+
+/**
+ * Best-effort inference for iOS reachability.
+ *
+ * `SCNetworkReachabilityFlags` can identify WWAN, but non-WWAN reachability does not reliably
+ * distinguish Wi-Fi from ethernet, VPN, or other routed paths. We therefore treat reachable
+ * non-cellular paths as `Wifi` for the sample app and document the caveat.
+ */
+internal fun inferNetworkType(flags: SCNetworkReachabilityFlags): NetworkType {
+    val reachable = flags.toInt() and kSCNetworkReachabilityFlagsReachable.toInt() != 0
+    val needsConn = flags.toInt() and kSCNetworkReachabilityFlagsConnectionRequired.toInt() != 0
+    if (!reachable || needsConn) return NetworkType.Unknown
+
+    val isCellular = flags.toInt() and kSCNetworkReachabilityFlagsIsWWAN.toInt() != 0
+    return if (isCellular) NetworkType.Cellular else NetworkType.Wifi
 }

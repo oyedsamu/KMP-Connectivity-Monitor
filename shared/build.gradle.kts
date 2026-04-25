@@ -40,12 +40,27 @@ kotlin {
         }
     }
     sourceSets {
+        val commonMain by getting
+        val commonTest by getting
+        val iosTest by getting
+        val androidUnitTest by getting
+
         commonMain.dependencies {
             implementation(compose.ui)
             implementation(compose.runtime)
             implementation(compose.foundation)
             implementation(compose.material3)
             implementation("com.github.skydoves:landscapist-coil3:2.4.0")
+        }
+        commonTest.dependencies {
+            implementation(libs.kotlin.test)
+            implementation(libs.kotlinx.coroutines.test)
+        }
+        androidUnitTest.dependencies {
+            implementation(libs.kotlin.test)
+        }
+        iosTest.dependencies {
+            implementation(libs.kotlin.test)
         }
     }
 }
