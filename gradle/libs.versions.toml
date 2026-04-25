@@ -1,11 +1,11 @@
 [versions]
-agp = "8.6.0-rc01"
-kotlin = "2.0.0"
-compose = "1.5.4"
-compose-material3 = "1.1.2"
-androidx-activityCompose = "1.8.0"
-jetbrains-compose = "1.6.11"
-coroutines = "1.8.1"
+agp = "9.1.0"
+kotlin = "2.3.20"
+compose = "1.10.5"
+compose-material3 = "1.4.0"
+androidx-activityCompose = "1.13.0"
+jetbrains-compose = "1.10.3"
+coroutines = "1.10.2"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
