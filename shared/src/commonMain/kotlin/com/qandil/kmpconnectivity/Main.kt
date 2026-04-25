@@ -11,6 +11,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -20,8 +21,13 @@ import androidx.compose.ui.unit.sp
 
 @Composable
 fun Main(factory: ConnectivityMonitorFactory) {
+    val monitor = remember(factory) { factory.create() }
+    Main(monitor = monitor)
+}
+
+@Composable
+fun Main(monitor: ConnectivityMonitor) {
     MyApplicationTheme {
-        val monitor = remember(factory) { factory.create() }
         val status by monitor.status.collectAsState(ConnectivityStatus.Unavailable)
         val networkType by monitor.networkType.collectAsState(NetworkType.Unknown)
         var simulateOffline by remember { mutableStateOf(false) }
@@ -33,12 +39,20 @@ fun Main(factory: ConnectivityMonitorFactory) {
         LaunchedEffect(Unit) { monitor.start() }
         DisposableEffect(Unit) { onDispose { monitor.stop() } }
         LaunchedEffect(effectiveStatus) {
-            if (previousStatus == ConnectivityStatus.Offline &&
-                effectiveStatus == ConnectivityStatus.Online
-            ) {
-                snackbarHostState.showSnackbar("Back online!")
+            val snackbarMessage = when (previousStatus) {
+                ConnectivityStatus.Offline if effectiveStatus == ConnectivityStatus.Online -> {
+                    "Back online!"
+                }
+                ConnectivityStatus.Online if effectiveStatus == ConnectivityStatus.Offline -> {
+                    "You are offline."
+                }
+                else -> null
             }
             previousStatus = effectiveStatus
+            snackbarMessage?.let {
+                snackbarHostState.currentSnackbarData?.dismiss()
+                snackbarHostState.showSnackbar(it)
+            }
         }
 
         Scaffold(
@@ -121,12 +135,13 @@ fun Main(factory: ConnectivityMonitorFactory) {
                                 style = MaterialTheme.typography.titleMedium
                             )
                             Text(
-                                text = "Use this to test the UI state and recovery snackbar.",
+                                text = "Use this to test both offline and recovery snackbars.",
                                 style = MaterialTheme.typography.bodyMedium
                             )
                         }
                         Spacer(modifier = Modifier.width(16.dp))
                         Switch(
+                            modifier = Modifier.testTag("simulateOfflineToggle"),
                             checked = simulateOffline,
                             onCheckedChange = { simulateOffline = it }
                         )
