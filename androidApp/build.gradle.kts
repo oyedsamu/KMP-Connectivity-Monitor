@@ -7,7 +7,7 @@ plugins {
 
 extensions.configure<ApplicationExtension>("android") {
     namespace = "com.qandil.kmpconnectivity"
-    compileSdk = 34
+    compileSdk = 36
     defaultConfig {
         applicationId = "com.qandil.kmpconnectivity"
         minSdk = 24

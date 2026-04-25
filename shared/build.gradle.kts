@@ -1,17 +1,23 @@
-import com.android.build.api.dsl.LibraryExtension
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
-    alias(libs.plugins.androidLibrary)
+    alias(libs.plugins.androidMultiplatformLibrary)
     alias(libs.plugins.jetbrains.compose)
     alias(libs.plugins.compose.compiler)
 }
 
 kotlin {
     applyDefaultHierarchyTemplate()
-    androidTarget {
+    android {
+        namespace = "com.qandil.kmpconnectivity.shared"
+        compileSdk = 36
+        minSdk = 24
+        androidResources {
+            enable = true
+        }
+        withHostTest {}
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_17)
         }
@@ -43,36 +49,24 @@ kotlin {
         val commonMain by getting
         val commonTest by getting
         val iosTest by getting
-        val androidUnitTest by getting
+        val androidHostTest by getting
 
         commonMain.dependencies {
-            implementation(compose.ui)
-            implementation(compose.runtime)
-            implementation(compose.foundation)
-            implementation(compose.material3)
+            implementation("org.jetbrains.compose.ui:ui:${libs.versions.jetbrains.compose.get()}")
+            implementation("org.jetbrains.compose.runtime:runtime:${libs.versions.jetbrains.compose.get()}")
+            implementation("org.jetbrains.compose.foundation:foundation:${libs.versions.jetbrains.compose.get()}")
+            implementation("org.jetbrains.compose.material3:material3:1.10.0-alpha05")
             implementation("com.github.skydoves:landscapist-coil3:2.4.0")
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
             implementation(libs.kotlinx.coroutines.test)
         }
-        androidUnitTest.dependencies {
+        androidHostTest.dependencies {
             implementation(libs.kotlin.test)
         }
         iosTest.dependencies {
             implementation(libs.kotlin.test)
         }
-    }
-}
-
-extensions.configure<LibraryExtension>("android") {
-    namespace = "com.qandil.kmpconnectivity"
-    compileSdk = 34
-    defaultConfig {
-        minSdk = 24
-    }
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
     }
 }
